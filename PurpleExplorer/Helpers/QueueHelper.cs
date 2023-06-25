@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.ServiceBus.Management;
+using Newtonsoft.Json;
 using PurpleExplorer.Models;
 using Message = PurpleExplorer.Models.Message;
 using AzureMessage = Microsoft.Azure.ServiceBus.Message;
@@ -31,7 +32,12 @@ public class QueueHelper : BaseHelper, IQueueHelper
 
     public async Task SendMessage(ServiceBusConnectionString connectionString, string queueName, string content)
     {
-        var message = new AzureMessage { Body = Encoding.UTF8.GetBytes(content) };
+        var serviceBusMessage = JsonConvert.DeserializeObject<ServiceBusMessage>(content);
+        var message = new AzureMessage { Body = Encoding.UTF8.GetBytes(serviceBusMessage.Content)};
+        foreach (var keyValuePair in serviceBusMessage.Properties)
+        {
+            message.UserProperties.Add(keyValuePair.Key, keyValuePair.Value);
+        }
         await SendMessage(connectionString, queueName, message);
     }
 
